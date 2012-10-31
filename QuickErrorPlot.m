@@ -5,8 +5,8 @@
 
 
 (* ::Text:: *)
-(*v0.1*)
-(*2012 Oct 28*)
+(*v0.2*)
+(*2012 Oct 31*)
 (**)
 (*Copyright 2012 Tadej Novak*)
 (*You may use this file under the terms of the BSD license - see LICENSE.txt*)
@@ -31,11 +31,12 @@ default options. Where multiple options are listed, the first
 is the default:
 
 General:
-    Legend      \[Rule] {},
-    LegendPosition \[Rule] {0.75, -0.3},
-    RemoveLines \[Rule] 0,
-    Colors      \[Rule] 1,
-    ColorsStart \[Rule] 1,
+    Legend           \[Rule] {},
+    LegendPosition   \[Rule] {0.75, -0.3},
+    RemoveLinesStart -> 0,
+    RemoveLinesEnd   -> 0,
+    Colors           \[Rule] 1,
+    ColorsStart      \[Rule] 1,
 
 For the Plot:
     Labels        \[Rule] {\"\",\"\"},
@@ -44,15 +45,57 @@ For the Plot:
     AspectRatio   \[Rule] 1/GoldenRatio";
 
 
+QuickFit::usage =
+"QuickFit[ data , <options> ]:
+  Creates simple fits for data.
+
+Data must contain exactly 4 columns - x, y, \[CapitalDelta]x, \[CapitalDelta]y, and must be
+in a form of sheets: {{{x, y, \[CapitalDelta]x, \[CapitalDelta]y}, {...}, ...}, {...}, ...}
+
+This is a list of options that QuickFit accepts and their
+default options. Where multiple options are listed, the first 
+is the default:
+
+General:
+    RemoveLinesStart -> 0,
+    RemoveLinesEnd   -> 0";
+
+
+QuickFitPlot::usage =
+"QuickFitPlot[ data , <options> ]:
+  Creates simple fits for data and plot them.
+
+Data must contain exactly 4 columns - x, y, \[CapitalDelta]x, \[CapitalDelta]y, and must be
+in a form of sheets: {{{x, y, \[CapitalDelta]x, \[CapitalDelta]y}, {...}, ...}, {...}, ...}
+
+This is a list of options that QuickFitPlot accepts and their
+default options. Where multiple options are listed, the first 
+is the default:
+
+General:
+    RemoveLinesStart -> 0,
+    RemoveLinesEnd   -> 0,
+    Colors           \[Rule] 1,
+    ColorsStart      \[Rule] 1
+
+For the Plot:
+    Select -> All | {1, 2, ...},
+    XRange \[Rule] Automatic | {1, 2}";
+
+
 Begin["`Private`"]
 
 
 QuickErrorPlot::dataerr :=
   "Data must contain exactly 4 columns - x, y, \[CapitalDelta]x, \[CapitalDelta]y";
+QuickFit::dataerr :=
+  "Data must contain exactly 4 columns - x, y, \[CapitalDelta]x, \[CapitalDelta]y";
+QuickFitPlot::dataerr :=
+  "Data must contain exactly 4 columns - x, y, \[CapitalDelta]x, \[CapitalDelta]y";
 
 
 (* ::Title:: *)
-(*Package*)
+(*QuickErrorPlot*)
 
 
 (* ::Section:: *)
@@ -65,12 +108,12 @@ QuickErrorPlot::dataerr :=
 
 Options[QuickErrorPlot]={
 (* general: *)
-    Legend      -> {},
-    LegendPosition -> {0.75, -0.3},
+    Legend           -> {},
+    LegendPosition   -> {0.75, -0.3},
     RemoveLinesStart -> 0,
-    RemoveLinesEnd -> 0,
-    Colors      -> 1,
-    ColorsStart -> 1,
+    RemoveLinesEnd   -> 0,
+    Colors           -> 1,
+    ColorsStart      -> 1,
 (* for the plot: *)
     Labels        -> {"",""},
     Title         -> "",
@@ -104,13 +147,29 @@ InternalQuickErrorPlot[data_,opts:OptionsPattern[]] := Module[
 
 
 
+
+
+
+
+
+
+
+
 (* ::Subsection:: *)
 (*Local variables*)
 
 
-{Opt, QEPoint, QEColors, QELegend,
+{Opt, QEPlotPoint, QEColors, QELegend,
  plot, sheets,
  errorPlot, errorLegend},
+
+
+
+
+
+
+
+
 
 
 
@@ -131,7 +190,7 @@ Opt[x_] := OptionValue[QuickErrorPlot,
 (*Create points*)
 
 
-QEPoint[x_,y_,dx_,dy_] := {
+QEPlotPoint[x_,y_,dx_,dy_] := {
     {x,y},
     ErrorBar[dx,dy]
 };
@@ -141,9 +200,12 @@ QEPoint[x_,y_,dx_,dy_] := {
 (*Colors list*)
 
 
-QEColors[c_, start_] := Table[
-    ColorData[c, "ColorList"][[i]],
-    {i, start, Length[ColorData[c, "ColorList"]]}
+QEColors[c_, start_] := If[Length[data] == 1,
+    ColorData[c, "ColorList"][[start]],
+    Table[
+        ColorData[c, "ColorList"][[i]],
+        {i, start, Length[ColorData[c, "ColorList"]]}
+    ]
 ];
 
 
@@ -165,14 +227,14 @@ QELegend[names_, color_, start_] := Table[
 (*Validate data*)
 
 
-If[Length[data[[1]]] == 4, True, Message[QuickErrorPlot::dataerr]; False];
+If[Length[data[[1]][[1]]] == 4, True, Message[QuickErrorPlot::dataerr]; False];
 
 
 (* ::Subsubsection:: *)
 (*Create points to plot*)
 
 
-plot = QEPoint @@@ Drop[#, Opt@RemoveLinesStart] &/@ data;
+plot = QEPlotPoint @@@ Drop[#, Opt@RemoveLinesStart] &/@ data;
 plot = Drop[#, -Opt@RemoveLinesEnd] &/@ plot;
 
 
@@ -212,6 +274,283 @@ If[Length[Opt@Legend] == 0, errorLegend = {},
 If[Length[Opt@Legend] == 0,
     errorPlot,
     ShowLegend[errorPlot, errorLegend]
+]
+
+
+]
+
+
+(* ::Title:: *)
+(*QuickFit*)
+
+
+(* ::Section:: *)
+(*Main QuickFit functions*)
+
+
+(* ::Subsection:: *)
+(*Options*)
+
+
+Options[QuickFit]={
+(* general: *)
+    RemoveLinesStart -> 0,
+    RemoveLinesEnd   -> 0
+};
+
+
+(* ::Subsection:: *)
+(*QuickErrorPlot*)
+
+
+QuickFit[data_,opts___] := 
+    InternalQuickFit[data,opts];
+
+
+(* ::Section:: *)
+(*Internal definition for QuickFit*)
+
+
+InternalQuickFit[data_,opts:OptionsPattern[]] := Module[
+
+
+
+
+
+
+
+
+
+
+
+
+(* ::Subsection:: *)
+(*Local variables*)
+
+
+{Opt, QFPoints, QFErrors, QFit,
+ points, errors, fits},
+
+
+
+
+
+
+
+
+
+
+
+
+(* ::Subsection:: *)
+(*Internal functions*)
+
+
+(* ::Subsubsection:: *)
+(*Options parsing*)
+
+
+Opt[x_] := OptionValue[QuickFit,
+    FilterRules[{opts},Options[QuickFit]],x];
+
+
+(* ::Subsubsection:: *)
+(*Create points*)
+
+
+QFPoints[l_] := Transpose[Transpose[
+    Drop[Drop[l, Opt@RemoveLinesStart], -Opt@RemoveLinesEnd]
+][[1;;2]]];
+
+
+(* ::Subsubsection:: *)
+(*Create errors*)
+
+
+QFErrors[l_] := Transpose[
+    Drop[Drop[l, Opt@RemoveLinesStart], -Opt@RemoveLinesEnd]
+][[4]];
+
+
+(* ::Subsubsection:: *)
+(*Create fit*)
+
+
+QFit[p_, e_] := LinearModelFit[
+    p,
+    x,
+    x,
+    Weights -> 1/e^2,
+    VarianceEstimatorFunction -> (1&)
+];
+
+
+(* ::Subsection:: *)
+(*Data processing*)
+
+
+(* ::Subsubsection:: *)
+(*Validate data*)
+
+
+If[Length[data[[1]][[1]]] == 4, True, Message[QuickFit::dataerr]; False];
+
+
+(* ::Subsubsection:: *)
+(*Create points to plot*)
+
+
+points = Map[QFPoints, data, 1];
+errors = Map[QFErrors, data, 1];
+
+
+(* ::Subsection:: *)
+(*Construct the fits*)
+
+
+fits = Table[
+    QFit[points[[i]], errors[[i]]], {i, 1, Length[data]}
+]
+
+
+]
+
+
+(* ::Title:: *)
+(*QuickFitPlot*)
+
+
+(* ::Section:: *)
+(*Main QuickFitPlot functions*)
+
+
+(* ::Subsection:: *)
+(*Options*)
+
+
+Options[QuickFitPlot]={
+(* general: *)
+    RemoveLinesStart -> 0,
+    RemoveLinesEnd   -> 0,
+    Colors           -> 1,
+    ColorsStart      -> 1,
+(* for the plot: *)
+    Select  -> All,
+    XRange  -> Automatic
+};
+
+
+(* ::Subsection:: *)
+(*QuickFitPlot*)
+
+
+QuickFitPlot[data_,opts___] := 
+    InternalQuickFitPlot[data,opts];
+
+
+(* ::Section:: *)
+(*Internal definition for QuickFitPlot*)
+
+
+InternalQuickFitPlot[data_,opts:OptionsPattern[]] := Module[
+
+
+
+
+
+
+
+
+
+
+
+
+(* ::Subsection:: *)
+(*Local variables*)
+
+
+{Opt, QEColors,
+ fits, plot, range, fitPlot},
+
+
+
+
+
+
+
+
+
+
+
+
+(* ::Subsection:: *)
+(*Internal functions*)
+
+
+(* ::Subsubsection:: *)
+(*Options parsing*)
+
+
+Opt[x_] := OptionValue[QuickFitPlot,
+    FilterRules[{opts},Options[QuickFitPlot]],x];
+
+
+(* ::Subsubsection:: *)
+(*Colors list*)
+
+
+QEColors[c_, start_] := If[Length[data] == 1,
+    ColorData[c, "ColorList"][[start]],
+    Table[
+        ColorData[c, "ColorList"][[i]],
+        {i, start, Length[ColorData[c, "ColorList"]]}
+    ]
+];
+
+
+(* ::Subsection:: *)
+(*Data processing*)
+
+
+(* ::Subsubsection:: *)
+(*Validate data*)
+
+
+If[Length[data[[1]][[1]]] == 4, True, Message[QuickErrorPlot::dataerr]; False];
+
+
+(* ::Subsubsection:: *)
+(*Create fits to plot*)
+
+
+fits = QuickFit[
+    data,
+    RemoveLinesStart -> Opt@RemoveLinesStart,
+    RemoveLinesEnd -> Opt@RemoveLinesEnd
+];
+plot = Table[fits[[i]][x], {i, 1, Length[fits]}];
+
+
+(* ::Subsubsection:: *)
+(*Define range*)
+
+
+If[Opt@XRange != Automatic, range = Opt@XRange,
+    range = {
+        Min[Transpose[Drop[Drop[data, Opt@RemoveLinesStart], -Opt@RemoveLinesEnd]][[1]]],
+        Max[Transpose[Drop[Drop[data, Opt@RemoveLinesStart], -Opt@RemoveLinesEnd]][[1]]]
+    }
+];
+
+
+(* ::Subsection:: *)
+(*Construct the fit plot*)
+
+
+fitPlot = Plot[
+    plot,
+    Evaluate[Join[{x}, Opt@XRange]],
+    PlotStyle -> QEColors[Opt@Colors, Opt@ColorsStart]
 ]
 
 
