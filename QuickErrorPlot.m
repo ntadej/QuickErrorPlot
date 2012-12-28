@@ -58,7 +58,8 @@ is the default:
 
 General:
     RemoveLinesStart -> 0,
-    RemoveLinesEnd   -> 0";
+    RemoveLinesEnd   -> 0,
+	Errors           -> True";
 
 
 QuickFitPlot::usage =
@@ -75,6 +76,7 @@ is the default:
 General:
     RemoveLinesStart -> 0,
     RemoveLinesEnd   -> 0,
+	Errors           -> True
     Colors           \[Rule] 1,
     ColorsStart      \[Rule] 1
 
@@ -303,7 +305,8 @@ Options[QuickFit]={
 (* general: *)
     IncludeConstantBasis -> True,
     RemoveLinesStart -> 0,
-    RemoveLinesEnd   -> 0
+    RemoveLinesEnd   -> 0,
+    Errors -> True
 };
 
 
@@ -341,7 +344,7 @@ InternalQuickFit[data_,opts:OptionsPattern[]] := Module[
 
 
 {Opt, QFPoints, QFErrors, QFit,
- points, errors, fits},
+ points, errors},
 
 
 
@@ -400,6 +403,12 @@ QFit[p_, e_] := LinearModelFit[
     VarianceEstimatorFunction -> (1&),
     IncludeConstantBasis -> Opt@IncludeConstantBasis
 ];
+QFit[p_] := LinearModelFit[
+    p,
+    x,
+    x,
+    IncludeConstantBasis -> Opt@IncludeConstantBasis
+];
 
 
 (* ::Subsection:: *)
@@ -425,8 +434,13 @@ errors = Map[QFErrors, data, 1];
 (*Construct the fits*)
 
 
-fits = Table[
-    QFit[points[[i]], errors[[i]]], {i, 1, Length[data]}
+If[Opt@Errors == True,
+    Table[
+        QFit[points[[i]], errors[[i]]], {i, 1, Length[data]}
+    ],
+    Table[
+        QFit[points[[i]]], {i, 1, Length[data]}
+    ]
 ]
 
 
@@ -450,6 +464,7 @@ Options[QuickFitPlot]={
     IncludeConstantBasis -> True,
     RemoveLinesStart -> 0,
     RemoveLinesEnd   -> 0,
+	Errors           -> True,
     Colors           -> 1,
     ColorsStart      -> 1,
 (* for the plot: *)
@@ -553,6 +568,7 @@ fits = QuickFit[
     data,
     RemoveLinesStart -> Opt@RemoveLinesStart,
     RemoveLinesEnd -> Opt@RemoveLinesEnd,
+	Errors -> Opt@Errors,
     IncludeConstantBasis -> Opt@IncludeConstantBasis
 ];
 plot = Table[fits[[i]][x], {i, 1, Length[fits]}];
