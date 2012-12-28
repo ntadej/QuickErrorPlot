@@ -135,7 +135,6 @@ QuickErrorPlot[data_,opts___] :=
 
 
 Needs["ErrorBarPlots`"]
-Needs["PlotLegends`"]
 
 
 (* ::Section:: *)
@@ -155,6 +154,10 @@ InternalQuickErrorPlot[data_,opts:OptionsPattern[]] := Module[
 
 
 
+
+
+
+
 (* ::Subsection:: *)
 (*Local variables*)
 
@@ -162,6 +165,10 @@ InternalQuickErrorPlot[data_,opts:OptionsPattern[]] := Module[
 {Opt, QEPlotPoint, QEColors, QELegend,
  plot, sheets,
  errorPlot, errorLegend},
+
+
+
+
 
 
 
@@ -294,6 +301,7 @@ If[Length[Opt@Legend] == 0,
 
 Options[QuickFit]={
 (* general: *)
+    IncludeConstantBasis -> True,
     RemoveLinesStart -> 0,
     RemoveLinesEnd   -> 0
 };
@@ -324,12 +332,20 @@ InternalQuickFit[data_,opts:OptionsPattern[]] := Module[
 
 
 
+
+
+
+
 (* ::Subsection:: *)
 (*Local variables*)
 
 
 {Opt, QFPoints, QFErrors, QFit,
  points, errors, fits},
+
+
+
+
 
 
 
@@ -381,7 +397,8 @@ QFit[p_, e_] := LinearModelFit[
     x,
     x,
     Weights -> 1/e^2,
-    VarianceEstimatorFunction -> (1&)
+    VarianceEstimatorFunction -> (1&),
+    IncludeConstantBasis -> Opt@IncludeConstantBasis
 ];
 
 
@@ -430,6 +447,7 @@ fits = Table[
 
 Options[QuickFitPlot]={
 (* general: *)
+    IncludeConstantBasis -> True,
     RemoveLinesStart -> 0,
     RemoveLinesEnd   -> 0,
     Colors           -> 1,
@@ -465,12 +483,20 @@ InternalQuickFitPlot[data_,opts:OptionsPattern[]] := Module[
 
 
 
+
+
+
+
 (* ::Subsection:: *)
 (*Local variables*)
 
 
 {Opt, QEColors,
  fits, plot, range, fitPlot},
+
+
+
+
 
 
 
@@ -526,7 +552,8 @@ If[Length[data[[1]][[1]]] == 4, True, Message[QuickErrorPlot::dataerr]; False];
 fits = QuickFit[
     data,
     RemoveLinesStart -> Opt@RemoveLinesStart,
-    RemoveLinesEnd -> Opt@RemoveLinesEnd
+    RemoveLinesEnd -> Opt@RemoveLinesEnd,
+    IncludeConstantBasis -> Opt@IncludeConstantBasis
 ];
 plot = Table[fits[[i]][x], {i, 1, Length[fits]}];
 
