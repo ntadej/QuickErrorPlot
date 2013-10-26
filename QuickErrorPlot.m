@@ -42,7 +42,9 @@ For the Plot:
     Labels        \[Rule] {\"\",\"\"},
     Title         \[Rule] \"\",
     PlotRange     \[Rule] Automatic,
-    AspectRatio   \[Rule] 1/GoldenRatio";
+    AspectRatio   \[Rule] 1/GoldenRatio,
+	Joined        \[Rule] False,
+	PlotParameters -> {}"
 
 
 QuickFit::usage =
@@ -120,7 +122,9 @@ Options[QuickErrorPlot]={
     Labels        -> {"",""},
     Title         -> "",
     PlotRange     -> Automatic,
-    AspectRatio   -> 1/GoldenRatio
+    AspectRatio   -> 1/GoldenRatio,
+	Joined        -> False,
+	PlotParameters -> {}
 };
 
 
@@ -160,6 +164,18 @@ InternalQuickErrorPlot[data_,opts:OptionsPattern[]] := Module[
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 (* ::Subsection:: *)
 (*Local variables*)
 
@@ -167,6 +183,18 @@ InternalQuickErrorPlot[data_,opts:OptionsPattern[]] := Module[
 {Opt, QEPlotPoint, QEColors, QELegend,
  plot, sheets,
  errorPlot, errorLegend},
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -222,9 +250,11 @@ QEColors[c_, start_] := If[Length[data] == 1,
 (*Legend data*)
 
 
-QELegend[names_, color_, start_] := Table[
-    {Graphics[{ColorData[color, "ColorList"][[start - 1 + i]], Point[{0,0}]}], names[[i]]},
-    {i, 1, Length[names]}
+QELegend[names_, position_] := Placed[
+	PointLegend[
+		names,
+		LegendFunction -> "Panel"
+	], position
 ];
 
 
@@ -248,6 +278,15 @@ plot = Drop[#, -Opt@RemoveLinesEnd] &/@ plot;
 
 
 (* ::Subsection:: *)
+(*Construct the legend*)
+
+
+If[Length[Opt@Legend] == 0, errorLegend = None,
+    errorLegend = QELegend[Opt@Legend, Opt@LegendPosition]
+];
+
+
+(* ::Subsection:: *)
 (*Construct the error plot*)
 
 
@@ -260,19 +299,10 @@ errorPlot = ErrorListPlot[
     Frame -> True,
     FrameLabel -> Opt@Labels,
     PlotLabel -> Opt@Title,
-    AspectRatio -> Opt@AspectRatio];
-
-
-(* ::Subsection:: *)
-(*Construct the legend*)
-
-
-If[Length[Opt@Legend] == 0, errorLegend = {},
-    errorLegend = {
-        QELegend[Opt@Legend, Opt@Colors, Opt@ColorsStart],
-        LegendPosition -> Opt@LegendPosition,
-        LegendSize -> 0.75,
-        LegendShadow -> None}
+	PlotLegends -> errorLegend,
+    AspectRatio -> Opt@AspectRatio,
+	Joined -> Opt@Joined,
+	Opt@PlotParameters
 ];
 
 
@@ -280,10 +310,7 @@ If[Length[Opt@Legend] == 0, errorLegend = {},
 (*Complete the colorbarplot*)
 
 
-If[Length[Opt@Legend] == 0,
-    errorPlot,
-    ShowLegend[errorPlot, errorLegend]
-]
+errorPlot
 
 
 ]
@@ -339,12 +366,36 @@ InternalQuickFit[data_,opts:OptionsPattern[]] := Module[
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 (* ::Subsection:: *)
 (*Local variables*)
 
 
 {Opt, QFPoints, QFErrors, QFit,
  points, errors},
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -502,12 +553,36 @@ InternalQuickFitPlot[data_,opts:OptionsPattern[]] := Module[
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 (* ::Subsection:: *)
 (*Local variables*)
 
 
 {Opt, QEColors,
  fits, plot, range, fitPlot},
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
